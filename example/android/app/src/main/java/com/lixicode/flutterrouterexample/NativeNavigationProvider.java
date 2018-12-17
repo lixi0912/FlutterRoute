@@ -33,6 +33,8 @@ public class NativeNavigationProvider implements NavigationProvider {
             }
             context.startActivity(intent);
             callback.onArrival(postcard);
+        } else {
+            callback.onLost(postcard);
         }
         return false;
     }

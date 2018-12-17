@@ -1,6 +1,7 @@
 package com.lixicode.flutterrouter.facade;
 
 import android.content.Context;
+import android.util.Log;
 
 import com.lixicode.flutterrouter.Constants;
 import com.lixicode.flutterrouter.facade.callback.RegistrarCallback;
@@ -101,6 +102,7 @@ public class FlutterNavigationProvider implements NavigationProvider {
             if (null != delegate) {
                 delegate.notImplemented();
             }
+            Log.e("lixicode", "no_find");
         }
 
         @Override
@@ -112,7 +114,7 @@ public class FlutterNavigationProvider implements NavigationProvider {
         public void onArrival(Postcard postcard) {
             if (null != delegate) {
                 postcard.getArguments().put("arrival", true);
-                delegate.success(postcard);
+                delegate.success(postcard.getArguments());
             }
         }
 
@@ -120,7 +122,7 @@ public class FlutterNavigationProvider implements NavigationProvider {
         public void onInterrupt(Postcard postcard) {
             if (null != delegate) {
                 postcard.getArguments().put("interrupt", true);
-                delegate.success(postcard);
+                delegate.success(postcard.getArguments());
             }
         }
     }

@@ -1,6 +1,7 @@
 package com.lixicode.flutterrouter.core;
 
 import android.content.Context;
+import android.util.Log;
 
 import com.lixicode.flutterrouter.facade.Postcard;
 import com.lixicode.flutterrouter.facade.callback.NavigationCallback;
@@ -34,6 +35,7 @@ public class NavigationManager {
 
     private static void onNavigation(final Iterator<NavigationProvider> providerIterable, final Context context, Postcard postcard, final NavigationCallback callback) {
         if (null == providerIterable || !providerIterable.hasNext()) {
+            Log.e("lixicode", "onLost1");
             callback.onLost(postcard);
             return;
         }
@@ -41,6 +43,7 @@ public class NavigationManager {
         provider.handleNavigation(context, postcard, new NavigationCallback() {
             @Override
             public void onLost(Postcard postcard) {
+                Log.e("lixicode", "onLost12");
                 onNavigation(providerIterable, context, postcard, callback);
             }
 

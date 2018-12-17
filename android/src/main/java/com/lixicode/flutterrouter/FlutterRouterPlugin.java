@@ -44,7 +44,6 @@ public class FlutterRouterPlugin {
         NavigationManager.registerProvider(provider);
     }
 
-
     public void navigation(Context context, Postcard postcard, NavigationCallback callback) {
         NavigationManager.navigation(wrappedContext(context), postcard, wrappedNavigationCallback(callback));
     }
