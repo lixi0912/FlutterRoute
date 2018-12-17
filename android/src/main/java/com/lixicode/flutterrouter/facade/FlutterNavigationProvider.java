@@ -102,7 +102,6 @@ public class FlutterNavigationProvider implements NavigationProvider {
             if (null != delegate) {
                 delegate.notImplemented();
             }
-            Log.e("lixicode", "no_find");
         }
 
         @Override
