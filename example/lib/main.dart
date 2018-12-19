@@ -19,6 +19,10 @@ void main() {
       (BuildContext context, PostCard postcard) {
     return new Demo();
   });
+  FlutterRouter.registerRoute("/demo",
+      (BuildContext context, PostCard postcard) {
+    return new Demo();
+  });
 
   runApp(MyApp());
 }
@@ -27,12 +31,15 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+        onGenerateRoute: (settings) {
+          return FlutterRouter.pathOf(settings.name).toRoute(context);
+        },
         home: Scaffold(
-      appBar: AppBar(
-        title: const Text('Plugin example app'),
-      ),
-      body: new MainPage(),
-    ));
+          appBar: AppBar(
+            title: const Text('Plugin example app'),
+          ),
+          body: new MainPage(),
+        ));
   }
 }
 

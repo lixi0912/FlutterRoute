@@ -1,11 +1,13 @@
 package com.lixicode.flutterrouter.facade;
 
 import android.content.Context;
+import android.net.Uri;
 import android.os.Bundle;
 
 import com.lixicode.flutterrouter.FlutterRouterPlugin;
 import com.lixicode.flutterrouter.facade.callback.NavigationCallback;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -25,6 +27,21 @@ public class Postcard {
         this.arguments = map;
     }
 
+
+    public Postcard(String path, String group) {
+        this(path, group, null, new HashMap<String, Object>());
+
+    }
+
+    public Postcard(String path, String group, Uri uri, Map<String, Object> arguments) {
+        arguments.put("path", path);
+        arguments.put("group", group);
+        if (null != uri) {
+            arguments.put("uri", uri.toString());
+        }
+        this.arguments = arguments;
+    }
+
     public String getPath() {
         Object value = arguments.get("path");
         if (null == value) {
@@ -34,7 +51,7 @@ public class Postcard {
     }
 
     public String getGroup() {
-        Object value = arguments.get("path");
+        Object value = arguments.get("group");
         if (null == value) {
             return null;
         }
@@ -55,20 +72,43 @@ public class Postcard {
         }
     }
 
+    public boolean isCallFromFlutter() {
+        Object value = arguments.get("callFromFlutter");
+        return null != value && Boolean.valueOf(String.valueOf(value));
+    }
+
+    public Postcard withString(String key, String value) {
+        return with(key, value);
+    }
+
+    public Postcard withInt(String key, int value) {
+        return with(key, value);
+    }
+
+    public Postcard withBoolean(String key, int value) {
+        return with(key, value);
+    }
+
+
+    private Postcard with(String key, Object value) {
+        arguments.put(key, value);
+        return this;
+    }
+
 
     Map<String, Object> getArguments() {
         return arguments;
     }
 
-    void navigation() {
+    public void navigation() {
         navigation(null, null);
     }
 
-    void navigation(NavigationCallback callback) {
+    public void navigation(NavigationCallback callback) {
         navigation(null, callback);
     }
 
-    void navigation(Context context, NavigationCallback callback) {
+    public void navigation(Context context, NavigationCallback callback) {
         FlutterRouterPlugin.shareInstance().navigation(context, this, callback);
     }
 

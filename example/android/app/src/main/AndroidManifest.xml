@@ -15,7 +15,8 @@
     <application
         android:name="io.flutter.app.FlutterApplication"
         android:icon="@mipmap/ic_launcher"
-        android:label="flutter_router_example">
+        android:label="flutter_router_example"
+        android:theme="@style/LaunchTheme">
 
         <provider
             android:name=".RouteInitializeProvider"
@@ -41,5 +42,6 @@
             </intent-filter>
         </activity>
         <activity android:name=".DemoActivity" />
+        <activity android:name=".RouteActivity" />
     </application>
 </manifest>

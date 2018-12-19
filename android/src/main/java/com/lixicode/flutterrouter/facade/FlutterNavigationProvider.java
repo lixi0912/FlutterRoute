@@ -4,6 +4,7 @@ import android.content.Context;
 import android.util.Log;
 
 import com.lixicode.flutterrouter.Constants;
+import com.lixicode.flutterrouter.core.NavigationManager;
 import com.lixicode.flutterrouter.facade.callback.RegistrarCallback;
 import com.lixicode.flutterrouter.facade.template.NavigationProvider;
 import com.lixicode.flutterrouter.facade.callback.NavigationCallback;
@@ -34,6 +35,8 @@ public class FlutterNavigationProvider implements NavigationProvider {
             final MethodChannel channel = new MethodChannel(registrar.messenger(), Constants.CHANNEL_NAME);
             channel.setMethodCallHandler(new RouteMethodCallHandler());
             channels.add(channel);
+
+            NavigationManager.registerProvider(new FlutterNavigationProvider());
         }
     };
 
@@ -45,7 +48,13 @@ public class FlutterNavigationProvider implements NavigationProvider {
 
 
     @Override
-    public boolean handleNavigation(Context context, Postcard postcard, NavigationCallback callback) {
+    public boolean handleNavigation(Context context, final Postcard postcard, final NavigationCallback callback) {
+        if (postcard.isCallFromFlutter()) {
+            callback.onLost(postcard);
+            return false;
+        }
+
+
         List<MethodChannel> methodChannels = channels;
         if (!methodChannels.isEmpty()) {
             MethodChannel channel = methodChannels.get(methodChannels.size() - 1);
@@ -53,17 +62,18 @@ public class FlutterNavigationProvider implements NavigationProvider {
                     postcard.getArguments(), new MethodChannel.Result() {
                         @Override
                         public void success(Object o) {
-
+                            callback.onFounded(postcard);
+                            callback.onArrival(postcard);
                         }
 
                         @Override
                         public void error(String s, String s1, Object o) {
-
+                            callback.onLost(postcard);
                         }
 
                         @Override
                         public void notImplemented() {
-
+                            callback.onLost(postcard);
                         }
                     });
         }

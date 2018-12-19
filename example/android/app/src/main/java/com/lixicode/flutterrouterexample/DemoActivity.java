@@ -1,14 +1,12 @@
 package com.lixicode.flutterrouterexample;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 
-/**
- * <>
- *
- * @author 陈晓辉
- * @date 2018/12/14
- */
+import com.lixicode.flutterrouter.FlutterRouterPlugin;
+
+
 public class DemoActivity extends Activity {
 
 
@@ -16,5 +14,15 @@ public class DemoActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_demo);
+//
+//        FlutterRouterPlugin.build("/main/demo")
+//                .withString("test", "fuck")
+//                .navigation();
+
+
+        Intent intent = new Intent(this, RouteActivity.class);
+        intent.setAction(Intent.ACTION_RUN);
+        intent.putExtra("route", "/demo?test=fuck");
+        startActivity(intent);
     }
 }

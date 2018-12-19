@@ -10,12 +10,6 @@ import com.lixicode.flutterrouter.facade.Postcard;
 import com.lixicode.flutterrouter.facade.callback.NavigationCallback;
 import com.lixicode.flutterrouter.facade.template.NavigationProvider;
 
-/**
- * <>
- *
- * @author 陈晓辉
- * @date 2018/12/14
- */
 public class NativeNavigationProvider implements NavigationProvider {
     @Override
     public String getId() {

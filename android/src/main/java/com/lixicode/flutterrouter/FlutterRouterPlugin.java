@@ -1,13 +1,21 @@
 package com.lixicode.flutterrouter;
 
 import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
 import android.content.Context;
+import android.net.Uri;
+import android.os.Build;
 
 import com.lixicode.flutterrouter.core.NavigationManager;
 import com.lixicode.flutterrouter.facade.FlutterNavigationProvider;
 import com.lixicode.flutterrouter.facade.Postcard;
 import com.lixicode.flutterrouter.facade.callback.NavigationCallback;
 import com.lixicode.flutterrouter.facade.template.NavigationProvider;
+
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 import io.flutter.plugin.common.PluginRegistry.Registrar;
 
@@ -43,6 +51,33 @@ public class FlutterRouterPlugin {
     public void registerProvider(NavigationProvider provider) {
         NavigationManager.registerProvider(provider);
     }
+
+    public static Postcard build(String path) {
+        return build(path, extraGroup(path));
+    }
+
+    public static Postcard build(String path, String group) {
+        return new Postcard(path, group);
+    }
+
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
+    public static Postcard build(Uri uri) {
+        Map<String, Object> query = new LinkedHashMap<>();
+        for (String name : uri.getQueryParameterNames()) {
+            List<String> parameters = uri.getQueryParameters(name);
+            if (!parameters.isEmpty()) {
+                query.put(name, parameters.get(parameters.size() - 1));
+            }
+        }
+        String path = uri.getPath();
+        return new Postcard(path, extraGroup(path), uri, query);
+    }
+
+
+    private static String extraGroup(String path) {
+        return null;
+    }
+
 
     public void navigation(Context context, Postcard postcard, NavigationCallback callback) {
         NavigationManager.navigation(wrappedContext(context), postcard, wrappedNavigationCallback(callback));

@@ -1,9 +1,10 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
-import 'constants.dart';
 import 'package:meta/meta.dart';
 import 'widget_builder.dart';
+import 'constants.dart';
 
 class FlutterRouter {
   FlutterRouter._internal();
@@ -34,12 +35,12 @@ class FlutterRouter {
   @protected
   static void navigation(BuildContext context, PostCard postcard,
       {NavigationArrivalCallback arrival,
-      NavigationFoundedCallback founded,
+      NavigationFoundedCallback onFounded,
       NavigationLostCallback lost,
       NavigationInterruptCallback interrupt}) {
     _Router._singleton.navigation(context, postcard,
         onArrival: arrival,
-        founded: founded,
+        onFounded: onFounded,
         onLost: lost,
         interrupt: interrupt);
   }
@@ -55,11 +56,16 @@ class _Router {
   GlobalKey _globalKey;
 
   _Router._internal() {
-    _channel.setMethodCallHandler((MethodCall call) {
+    _channel.setMethodCallHandler((MethodCall call) async {
       // call from native
       String method = call.method;
       if (method == Constants.ROUTER_CHANNEL_NAVIGATION_OF) {
-        navigation(_globalKey.currentContext, PostCard.of(call.arguments));
+        PostCard postcard = PostCard.of(call.arguments);
+        return _navigation(_globalKey.currentContext, postcard,
+            onLost: (postcard, {dynamic result}) {
+          _channel.invokeMethod(
+              Constants.ROUTER_CHANNEL_FOUNDED, call.arguments);
+        });
       } else if (method == Constants.ROUTER_CHANNEL_NAVIGATION_ON_RESULT) {
         handleOnResult(_globalKey.currentContext, PostCard.of(call.arguments));
       }
@@ -78,7 +84,7 @@ class _Router {
 
   Future navigation(BuildContext context, PostCard postcard,
       {NavigationArrivalCallback onArrival,
-      NavigationFoundedCallback founded,
+      NavigationFoundedCallback onFounded,
       NavigationLostCallback onLost,
       NavigationInterruptCallback interrupt}) async {
     try {
@@ -86,34 +92,35 @@ class _Router {
           Constants.ROUTER_CHANNEL_NAVIGATION_OF, postcard._arguments);
 
       if (result is String) {}
-    } on MissingPluginException catch (e) {
-      WidgetBuilderCompat buildWidget =
-          _factory.findBuilder(postcard._path, group: postcard._group);
-      if (null != buildWidget) {
-        Widget page = buildWidget(context, postcard);
-        if (null != page) {
-          MaterialPageRoute pageRoute = new MaterialPageRoute(
-              settings: new RouteSettings(name: postcard._path),
-              builder: (context) {
-                return page;
-              });
+    } on MissingPluginException {
+      return _navigation(context, postcard);
+    }
+  }
 
-          Future<dynamic> pageResult = Navigator.of(context).push(pageRoute);
-          if (null != onArrival) {
-            onArrival(postcard);
-          }
-          dynamic result = await pageResult;
-          if (null != result) {
-            _channel.invokeMethod(
-                Constants.ROUTER_CHANNEL_NAVIGATION_ON_RESULT, result);
-          }
-        } else if (null != onLost) {
+  Future<dynamic> _navigation(BuildContext context, PostCard postcard,
+      {NavigationArrivalCallback onArrival,
+      NavigationFoundedCallback onFounded,
+      NavigationLostCallback onLost,
+      NavigationInterruptCallback interrupt}) {
+    Future<dynamic> future = new Future(() async {
+      Route<dynamic> route = postcard.toRoute(context);
+      if (null == route) {
+        if (null != onLost) {
           onLost(postcard);
         }
-      } else if (null != onLost) {
-        onLost(postcard);
+        throw MissingPluginException(
+            'No route for postcard[${postcard._path}]');
       }
-    }
+      if (null != onFounded) {
+        onFounded(postcard);
+      }
+      Future<dynamic> result = Navigator.of(context).push(route);
+      if (null != onArrival) {
+        onArrival(postcard);
+      }
+      return result;
+    });
+    return future;
   }
 
   PostCard build({String path, String group, Uri uri}) {
@@ -128,7 +135,14 @@ class _Router {
 
   String extractGroup(String path) {
     ArgumentError.checkNotNull(path, "path group");
-    return path.substring(1, path.indexOf('/', 1));
+    if (!path.startsWith('/')) {
+      return null;
+    }
+    int index = path.indexOf('/', 1);
+    if (index == -1) {
+      return path.substring(1);
+    }
+    return path.substring(1, index);
   }
 }
 
@@ -162,6 +176,8 @@ abstract class PostCard {
     NavigationLostCallback lost,
     NavigationInterruptCallback interrupt,
   });
+
+  Route<dynamic> toRoute(BuildContext context);
 }
 
 class _PostCard implements PostCard {
@@ -169,7 +185,14 @@ class _PostCard implements PostCard {
   final Map _arguments;
 
   factory _PostCard._of(Map args) {
-    return _PostCard._internal(args, Uri.parse(args['uri']));
+    Uri uri;
+    String uriStr = args['uri'];
+    if (null != uriStr && uriStr.isNotEmpty) {
+      uri = Uri.parse(uriStr);
+    } else {
+      uri = null;
+    }
+    return _PostCard._internal(args, uri);
   }
 
   _PostCard._internal(this._arguments, this._uri);
@@ -177,7 +200,6 @@ class _PostCard implements PostCard {
   factory _PostCard(
       {String path, String group, Uri uri, Map bundle = const {}}) {
     Map map = Map.from(bundle);
-    map.putIfAbsent('callFromFlutter', () => true);
     map.putIfAbsent('path', () => path);
     map.putIfAbsent('group', () => group);
     map.putIfAbsent('uri', () => uri?.toString());
@@ -206,6 +228,20 @@ class _PostCard implements PostCard {
       NavigationLostCallback lost,
       NavigationInterruptCallback interrupt}) {
     FlutterRouter.navigation(context, this,
-        arrival: arrival, founded: founded, lost: lost, interrupt: interrupt);
+        arrival: arrival, onFounded: founded, lost: lost, interrupt: interrupt);
+  }
+
+  @override
+  Route<dynamic> toRoute(BuildContext context) {
+    WidgetBuilderCompat buildWidget =
+        _Router._singleton._factory.findBuilder(_path, group: _group);
+    if (null == buildWidget) {
+      return null;
+    }
+    return new MaterialPageRoute(
+        settings: new RouteSettings(name: _path),
+        builder: (context) {
+          return buildWidget(context, this);
+        });
   }
 }

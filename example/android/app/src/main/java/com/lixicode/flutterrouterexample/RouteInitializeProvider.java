@@ -8,12 +8,7 @@ import android.net.Uri;
 
 import com.lixicode.flutterrouter.FlutterRouterPlugin;
 
-/**
- * <>
- *
- * @author 陈晓辉
- * @date 2018/12/14
- */
+
 public class RouteInitializeProvider extends ContentProvider {
     @Override
     public boolean onCreate() {
